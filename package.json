@@ -1,0 +1,16 @@
+{
+  "name": "bloodbank-directory",
+  "version": "1.0.0",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.87.1"
+  },
+  "description": "A lightweight PHP-based application that lists blood banks with filtering, pagination, and search features.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
