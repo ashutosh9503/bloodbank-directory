@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Register | Bloodbank Directory</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .auth-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-logo {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .auth-footer a {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .col {
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">
+                🩸 Bloodbank Directory
+            </a>
+            <div class="nav-actions">
+                <a href="index.html" class="btn btn-outline" style="padding: 8px 16px;">Back to Home</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="auth-container">
+        <div class="card auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">📝</div>
+                <h1 style="margin:0; font-size:24px;">Create Account</h1>
+                <p style="color:var(--text-muted); margin:8px 0 0;">Join the community to save lives</p>
+            </div>
+
+            <form>
+                <div class="form-group">
+                    <label class="form-label" for="name">Full Name</label>
+                    <input type="text" id="name" class="form-control" placeholder="Rahul kumar" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" class="form-control" placeholder="name@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="blood-group">Blood Group (Optional)</label>
+                    <select id="blood-group" class="form-control">
+                        <option value="">Select Blood Group</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="Create a strong password"
+                        required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%;">Register</button>
+            </form>
+
+            <div class="auth-footer">
+                Already have an account? <a href="login.html">Sign In</a>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Add Supabase SDK before other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+
+    <script>
+        document.querySelector('form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const type = document.getElementById('blood-group').value;
+            const password = document.getElementById('password').value;
+            const btn = e.target.querySelector('button');
+
+            let msg = e.target.querySelector('#msg');
+            if (!msg) {
+                msg = document.createElement('p');
+                msg.id = 'msg';
+                msg.style.textAlign = 'center';
+                msg.style.marginTop = '10px';
+                e.target.appendChild(msg);
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Registering...";
+            msg.textContent = "";
+
+            if (!supabase) {
+                msg.style.color = 'red';
+                msg.textContent = "Supabase client not initialized. Check console.";
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                // 1. Sign up user
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: { full_name: name } // Optional: Store metadata in auth.users too
+                    }
+                });
+
+                if (authError) throw authError;
+
+                if (authData?.user) {
+                    // 2. Insert into profiles
+                    const { error: profileError } = await supabase.from('profiles').insert([{
+                        id: authData.user.id,
+                        full_name: name,
+                        blood_group: type
+                    }]);
+
+                    if (profileError) {
+                        console.error('Profile creation failed:', profileError);
+                        msg.textContent = "Account created but profile setup failed.";
+                        msg.style.color = 'orange';
+                        // Proceeding anyway because auth succeeded
+                    } else {
+                        msg.style.color = 'green';
+                        msg.textContent = 'Account created! Redirecting to login...';
+                    }
+
+                    setTimeout(() => location.href = 'login.html', 1500);
+                } else {
+                    // Start of confirm email flow if email verification is on
+                    msg.style.color = 'blue';
+                    msg.textContent = 'Please check your email to verify your account.';
+                }
+
+            } catch (err) {
+                console.error(err);
+                msg.textContent = err.message || "Registration failed";
+                msg.style.color = 'red';
+                btn.disabled = false;
+                btn.textContent = "Register";
+            }
+        });
+    </script>
+</body>
+
+</html>

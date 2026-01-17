@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Directory | Bloodbank Directory India</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <span class="animate-pulse">🩸</span> Bloodbank Directory
+            </a>
+            <div class="nav-actions">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="directory.html" class="nav-link active">Directory</a>
+                <a href="news.html" class="nav-link">News</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="login.html" class="nav-link">Login</a>
+                <a href="register.html" class="btn btn-primary">Join</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding-top: 40px;">
+
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-size: 32px; font-weight: 800; color: var(--text-main); margin-bottom: 10px;">Search Blood
+                Banks</h1>
+            <p style="color: var(--text-muted);">Filter by location, type, or contact availability</p>
+        </div>
+
+        <!-- Search Controls -->
+        <div class="filters-section">
+            <div class="search-grid">
+
+                <div class="form-group">
+                    <label>Location Search</label>
+                    <input id="filters-district" class="form-control" placeholder="Type District, City or Pincode..." />
+                </div>
+
+
+                <div class="form-group">
+                    <label>Institute Type</label>
+                    <select id="filters-type" class="form-control">
+                        <option value="all">All Types</option>
+                        <option value="Govt.">Government</option>
+                        <option value="Private">Private</option>
+                        <option value="Charitable/Vol">Charitable</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Availability</label>
+                    <select id="filters-contact" class="form-control">
+                        <option value="all">Any Contact</option>
+                        <option value="has">Has Phone</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button id="applyBtn" class="btn btn-primary" style="flex: 1;">Search</button>
+                    <button id="resetBtn" class="btn btn-outline">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Meta -->
+        <div class="results-meta">
+            <div class="results-count">Found <span id="totalCount">0</span> blood banks</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="filters-perPage" class="form-control"
+                    style="padding: 6px 12px; font-size: 13px; width: auto;">
+                    <option>25</option>
+                    <option selected>50</option>
+                    <option>100</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Cards Grid -->
+        <div id="cardsWrap" class="cards-grid"></div>
+
+        <!-- Pagination -->
+
+        <!-- Pagination -->
+        <div id="pager" class="pagination"></div>
+
+    </div>
+
+    <footer
+        style="background: white; border-top: 1px solid var(--border-color); padding: 40px 0; margin-top: 60px; text-align: center; color: var(--text-muted);">
+        &copy; 2026 Bloodbank Directory India
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

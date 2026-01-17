@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Medical News | Bloodbank Directory India</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <span class="animate-pulse">🩸</span> Bloodbank Directory
+            </a>
+            <div class="nav-actions">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="directory.html" class="nav-link">Directory</a>
+                <a href="news.html" class="nav-link active">News</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="login.html" class="nav-link">Login</a>
+                <a href="register.html" class="btn btn-primary">Join</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="container section" style="min-height: 60vh;">
+        <div style="text-align: center; margin-bottom: 40px;" class="animate-fade-in">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 10px;">Medical <span
+                    style="color: var(--primary);">News</span></h1>
+            <p style="color: var(--text-muted);">Latest updates from the healthcare and blood donation community.</p>
+        </div>
+
+        <!-- News Grid -->
+        <div id="news-grid" class="cards-grid">
+            <!-- Loading Skeletons -->
+            <div class="card skeleton skeleton-card"></div>
+            <div class="card skeleton skeleton-card"></div>
+            <div class="card skeleton skeleton-card"></div>
+            <div class="card skeleton skeleton-card"></div>
+            <div class="card skeleton skeleton-card"></div>
+            <div class="card skeleton skeleton-card"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="no-news-msg" style="display:none; text-align:center; padding: 60px; color: var(--text-muted);">
+            <div style="font-size:40px; margin-bottom:10px;">📰</div>
+            <p>No medical news available currently. Please check back later.</p>
+            <button onclick="window.location.reload()" class="btn btn-outline" style="margin-top:20px;">Refresh</button>
+        </div>
+
+    </div>
+
+    <footer
+        style="background: white; border-top: 1px solid var(--border-color); padding: 40px 0; margin-top: 60px; text-align: center; color: var(--text-muted);">
+        &copy; 2026 Bloodbank Directory India
+    </footer>
+
+    <script src="js/app_news.js"></script>
+</body>
+
+</html>

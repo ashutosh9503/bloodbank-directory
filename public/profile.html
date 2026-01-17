@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My Profile | Bloodbank Directory India</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <span class="animate-pulse">🩸</span> Bloodbank Directory
+            </a>
+            <div class="nav-actions">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="directory.html" class="nav-link">Directory</a>
+                <a href="news.html" class="nav-link">News</a>
+                <a href="#" class="nav-link active">Profile</a>
+                <a href="#" id="logoutBtn" class="btn btn-outline" style="padding: 8px 16px;">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Content -->
+    <div class="container" style="padding-top: 60px; max-width: 800px;">
+
+        <div class="card" style="padding: 40px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="font-size: 60px; margin-bottom: 10px;">👤</div>
+                <h1 id="userName" style="margin: 0;">Loading...</h1>
+                <p id="userEmail" style="color: var(--text-muted);">...</p>
+            </div>
+
+            <div
+                style="border-top: 1px solid var(--border-color); padding-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div style="background: var(--bg-body); padding: 20px; border-radius: var(--radius-md);">
+                    <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Blood Group</div>
+                    <div id="userBlood" style="font-size: 24px; font-weight: 700; color: var(--primary);">--</div>
+                </div>
+                <div style="background: var(--bg-body); padding: 20px; border-radius: var(--radius-md);">
+                    <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Joined On</div>
+                    <div id="userJoined" style="font-size: 18px; font-weight: 600;">--</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center;">
+                <p style="color: var(--text-muted); font-size: 14px;">Thank you for being part of our life-saving
+                    community.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <footer
+        style="background: white; border-top: 1px solid var(--border-color); padding: 40px 0; margin-top: 60px; text-align: center; color: var(--text-muted);">
+        &copy; 2026 Bloodbank Directory India
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Simple auth check
+            if (!supabase) {
+                console.error("Supabase not init");
+                return;
+            }
+
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const user = session.user;
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('userJoined').textContent = new Date(user.created_at).toLocaleDateString();
+
+            // Fetch profile details
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (profile) {
+                document.getElementById('userName').textContent = profile.full_name || 'User';
+                document.getElementById('userBlood').textContent = profile.blood_group || '--';
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            });
+        });
+    </script>
+</body>
+
+</html>

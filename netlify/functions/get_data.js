@@ -1,75 +1,81 @@
-// netlify/functions/get_data.js
 const { createClient } = require('@supabase/supabase-js');
 
-exports.handler = async function(event, context) {
+exports.handler = async function (event) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ success:false, error:'Missing Supabase env vars' }) };
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: 'Missing env' }) };
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   try {
     const qp = event.queryStringParameters || {};
-    const page = Math.max(1, parseInt(qp.page || '1', 10));
-    const per_page = Math.max(1, parseInt(qp.per_page || qp.perPage || '50', 10));
-    const districtRaw = (qp.district || '').trim();   // user typed location/city
-    const nameRaw = (qp.name || '').trim();           // optional name param
+
+    const page = parseInt(qp.page || '1');
+    const per_page = parseInt(qp.per_page || '50');
+    const district = (qp.district || '').trim();
+    const stateVal = (qp.state || '').trim();
     const type = (qp.type || '').trim();
-    const contact = (qp.contact || '').trim(); // "all" | "has" | "no"
+    const contact = (qp.contact || 'all').trim();
 
-    // base query with exact count
-    let query = supabase.from('blood').select('*', { count: 'exact' });
+    // 1. Fetch Data Query
+    let query = supabase.from('institutes').select('*', { count: 'exact' });
 
-    // Build search filters:
-    // Search both name AND location for the districtRaw (partial, case-insensitive)
-    if (districtRaw) {
-      const d = districtRaw.replace(/'/g, "''");
-      // match if name OR location contains the substring
-      // Supabase .or() expects comma-separated conditions
-      const orExpr = `name.ilike.%${d}%,location.ilike.%${d}%`;
-      query = query.or(orExpr);
+    if (district) {
+      query = query.or(`name.ilike.%${district}%,address.ilike.%${district}%`);
     }
 
-    // If a name param is provided, add it as an additional filter (AND)
-    if (nameRaw) {
-      query = query.ilike('name', `%${nameRaw.replace(/'/g,"''")}%`);
+    if (stateVal) {
+      query = query.eq('state', stateVal);
     }
 
-    // Filter by type if requested (and not 'all')
     if (type && type !== 'all') {
-      query = query.eq('type', type);
+      query = query.eq('category', type);
     }
 
-    // Contact filter
     if (contact === 'has') {
-      query = query.not('contact', 'is', null).neq('contact', '');
-    } else if (contact === 'no') {
-      query = query.or('contact.is.null,contact.eq.');
+      query = query.not('phone', 'is', null).neq('phone', '');
     }
 
-    // Pagination using range
     const from = (page - 1) * per_page;
     const to = from + per_page - 1;
 
-    const { data, error, count } = await query.order('public_id', { ascending: true }).range(from, to);
+    const { data, error, count } = await query
+      .order('sno', { ascending: true })
+      .range(from, to);
 
-    if (error) {
-      return { statusCode: 500, body: JSON.stringify({ success:false, error: error.message || error }) };
-    }
+    if (error) throw error;
+
+    // 2. Fetch Distinct States (Cached-like approach: separate query only if needed or just once)
+    // For now, let's fetch types from a separate function, but states we might want to return here 
+    // OR create a new endpoint 'get_states'. 
+    // To keep it simple for this V2, we'll create a separate endpoint or just return user-provided states in DB?
+    // Actually, creating a separate endpoint for metadata is cleaner, but let's stick to the plan:
+    // "Update get_data function to handle state param" -> Done above.
+    // "Frontend: Add State Dropdown and logic in app.js" -> We need a way to get the list of states.
+
+    // Let's rely on a separate 'get_states' function or just hardcode common ones if DB is empty, 
+    // but better to fetch distinct states.
+    // For performance, let's NOT fetch distinct states on every search. 
+    // We will assume a separate call or hardcoded list for now, OR fetch them in a separate 'get_metadata.js' function.
+    // Wait, the client requested "Auto populate state list from database".
+    // I will modify this function to optionally return states if requested, or better, make a new lightweight function.
+    // Let's stick to just search logic here to keep it fast.
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
         data: data || [],
-        total: typeof count === 'number' ? count : (data ? data.length : 0),
-        page: page,
-        per_page: per_page
+        total: count || 0,
+        page,
+        per_page
       })
     };
+
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ success:false, error: err.message }) };
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
   }
 };

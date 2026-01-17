@@ -1,299 +1,120 @@
-<?php
-// public/index.php
-// Combined Card + Table UI with a working "Switch to Table" toggle.
-// Uses get_data.php for data (same API you already have).
-
-?>
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Bloodbank Directory</title>
-<style>
-:root{--primary:#0b79ff;--accent:#e84b3d;--muted:#666}
-body{font-family:Inter,Arial,Helvetica,sans-serif;background:#f6f7fb;margin:0;padding:24px}
-.container{max-width:1200px;margin:0 auto}
-h1{margin:0 0 12px;font-size:28px}
-.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
-.input, select{padding:10px 12px;border-radius:8px;border:1px solid #e1e6ee;font-size:14px}
-.input{min-width:260px;flex:1}
-.btn{padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
-.btn.primary{background:var(--primary);color:#fff}
-.btn.ghost{background:#fff;border:1px solid #e1e6ee}
-.controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.small{color:var(--muted);font-size:13px}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bloodbank Directory India - Save Lives</title>
 
-/* cards */
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
-.card{background:#fff;border-radius:10px;padding:14px;border:1px solid #eee;box-shadow:0 6px 20px rgba(20,20,20,0.04);display:flex;flex-direction:column;gap:8px}
-.card .title{font-weight:700;color:#222}
-.card .meta{font-size:12px;color:var(--muted)}
-.card .addr{font-size:13px;color:#333}
-.card .actions{display:flex;gap:8px;margin-top:8px}
-.cta{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;text-decoration:none;font-weight:600}
-.cta.call{background:var(--accent);color:#fff}
-.cta.map{background:#f5f6f8;border:1px solid #e6e9ef;color:#222}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-/* table */
-.table-wrap{background:#fff;border-radius:10px;padding:10px;border:1px solid #eee}
-.table{width:100%;border-collapse:collapse}
-.table th,.table td{padding:10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}
-.table th{background:var(--accent);color:#fff}
-.table tr:nth-child(even) td{background:#fafafa}
-
-/* pagination */
-.pager{display:flex;gap:8px;margin-top:16px;align-items:center}
-.page-btn{padding:8px 12px;border-radius:8px;border:1px solid #e1e6ee;background:#fff;cursor:pointer}
-.page-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.no-results{padding:30px;border-radius:8px;background:#fff;border:1px solid #eee;color:var(--muted)}
-
-/* small screens */
-@media(max-width:640px){.filters{flex-direction:column;align-items:stretch}.input{min-width:unset}}
-</style>
+  <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-<div class="container">
-  <div style="display:flex;justify-content:space-between;align-items:center">
-    <h1>Bloodbank Directory</h1>
-    <div>
-      <button id="viewToggleBtn" class="btn ghost">Switch to Table</button>
-    </div>
-  </div>
 
-  <div class="filters" role="search" aria-label="Filters">
-    <input id="district" class="input" placeholder="Filter by district (type location)" />
-    <select id="type" class="input">
-      <option value="all">All types</option>
-      <option>Charitable/Vol</option>
-      <option>Govt.</option>
-      <option>Private</option>
-      <option>Hospital</option>
-    </select>
-
-    <select id="contact" class="input" style="max-width:160px;">
-      <option value="all">Contact (all)</option>
-      <option value="has">Has contact</option>
-      <option value="no">No contact</option>
-    </select>
-
-    <select id="perPage" class="input" style="max-width:110px;">
-      <option value="25">25</option>
-      <option value="50" selected>50</option>
-      <option value="100">100</option>
-    </select>
-
-    <button id="applyBtn" class="btn primary">Apply</button>
-    <button id="resetBtn" class="btn ghost">Reset</button>
-  </div>
-
-  <div class="controls">
-    <div class="small">Total: <strong id="totalCount">—</strong> results</div>
-    <div id="pagerTop"></div>
-  </div>
-
-  <!-- CARD VIEW -->
-  <div id="cardsWrap" class="cards" aria-live="polite"></div>
-  <div id="noResults" class="no-results" style="display:none">No results found.</div>
-
-  <!-- TABLE VIEW (hidden by default) -->
-  <div id="tableWrap" class="table-wrap" style="display:none; margin-top:12px;">
-    <table class="table" aria-live="polite">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Public ID</th>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Location</th>
-          <th>Contact</th>
-          <th>Added</th>
-        </tr>
-      </thead>
-      <tbody id="tbodyData"></tbody>
-    </table>
-  </div>
-
-  <div style="display:flex;justify-content:flex-end;align-items:center;margin-top:12px">
-    <div id="pagerBottom" class="pager"></div>
-  </div>
-</div>
-
-<script>
-/* --------- Config & State --------- */
-const API_ENDPOINT = '/.netlify/functions/get_data';
-let state = {
-  page: 1,
-  per_page: 50,
-  district: '',
-  type: 'all',
-  contact: 'all',
-  view: 'cards' // 'cards' or 'table'
-};
-
-/* --------- Helpers --------- */
-const $ = s => document.querySelector(s);
-function escapeHTML(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
-function shorten(s,n){ if(!s) return ''; return s.length<=n ? s : s.slice(0,n-1) + '…'; }
-
-/* --------- Renderers --------- */
-function renderCards(rows, startIndex){
-  const wrap = $('#cardsWrap');
-  wrap.innerHTML = '';
-  if(!rows || rows.length === 0){
-    $('#noResults').style.display = '';
-    wrap.style.display = 'none';
-    return;
-  }
-  $('#noResults').style.display = 'none';
-  wrap.style.display = '';
-  for(let i=0;i<rows.length;i++){
-    const r = rows[i];
-    const card = document.createElement('div');
-    card.className = 'card';
-    const tel = r.contact ? r.contact.split('/')[0].trim().replace(/\s+/g,'') : '';
-    const telHref = tel ? `tel:${tel}` : '#';
-    const mapHref = r.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.location)}` : '#';
-    card.innerHTML = `
-      <div class="title">${escapeHTML(r.name||'')}</div>
-      <div class="meta">${escapeHTML(r.public_id||'')}</div>
-      <div class="addr">${escapeHTML(shorten(r.location||'',180))}</div>
-      <div class="meta">Type: ${escapeHTML(r.type||'')}</div>
-      <div class="actions">
-        <a class="cta call" ${tel ? `href="${telHref}"` : 'href="#" onclick="return false;"'}>${tel ? 'Call' : 'No Call'}</a>
-        <a class="cta map" target="_blank" rel="noopener" href="${mapHref}">View on Map</a>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span class="animate-pulse">🩸</span> Bloodbank Directory
+      </a>
+      <div class="nav-actions">
+        <a href="index.html" class="nav-link active">Home</a>
+        <a href="directory.html" class="nav-link">Directory</a>
+        <a href="news.html" class="nav-link">News</a>
+        <a href="about.html" class="nav-link">About</a>
+        <a href="login.html" class="nav-link">Login</a>
+        <a href="register.html" class="btn btn-primary">Join</a>
       </div>
-    `;
-    wrap.appendChild(card);
-  }
-}
+    </div>
+  </nav>
 
-function renderTable(rows, startIndex){
-  const tbody = $('#tbodyData');
-  tbody.innerHTML = '';
-  if(!rows || rows.length === 0){
-    tbody.innerHTML = '<tr><td colspan="7">No results</td></tr>';
-    return;
-  }
-  for(let i=0;i<rows.length;i++){
-    const r = rows[i];
-    const idx = startIndex + i + 1;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${idx}</td>
-      <td>${escapeHTML(r.public_id||'')}</td>
-      <td>${escapeHTML(r.name||'')}</td>
-      <td>${escapeHTML(r.type||'')}</td>
-      <td>${escapeHTML(shorten(r.location||'',140))}</td>
-      <td>${escapeHTML(r.contact||'')}</td>
-      <td>${escapeHTML(r.created_at||'')}</td>
-    `;
-    tbody.appendChild(tr);
-  }
-}
+  <!-- Background Animation -->
+  <div class="wave-bg"></div>
 
-function renderPager(total, page, per_page, containerSelector){
-  const container = document.querySelector(containerSelector);
-  container.innerHTML = '';
-  const totalPages = Math.max(1, Math.ceil(total / per_page));
-  const addBtn = (p, label, active=false) => {
-    const b = document.createElement('button');
-    b.className = 'page-btn' + (active ? ' active' : '');
-    b.textContent = label;
-    b.onclick = () => { state.page = p; fetchData(); };
-    container.appendChild(b);
-  };
-  if(page > 1) addBtn(1,'First');
-  if(page > 1) addBtn(page-1,'Prev');
-  const start = Math.max(1, page-2), end = Math.min(totalPages, page+2);
-  for(let i=start;i<=end;i++) addBtn(i,i,i===page);
-  if(page < totalPages) addBtn(page+1,'Next');
-  if(page < totalPages) addBtn(totalPages,'Last');
-}
+  <!-- Hero Section -->
+  <header class="hero" style="position:relative; overflow:hidden;">
+    <div class="ecg-line"></div>
+    <div class="container animate-fade-in" style="position:relative; z-index:1;">
+      <h1>Find <span>Blood Banks</span> Near You</h1>
+      <p>A comprehensive, real-time directory of blood banks across India. Connecting donors, patients, and life-saving
+        resources.</p>
 
-/* --------- Fetch & UI glue --------- */
-async function fetchData(){
-  const params = new URLSearchParams();
-  params.set('page', state.page);
-  params.set('per_page', state.per_page);
-  if(state.district) params.set('district', state.district);
-  if(state.type) params.set('type', state.type);
-  if(state.contact) params.set('contact', state.contact);
+      <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 30px;">
+        <a href="directory.html" class="btn btn-primary" style="padding: 14px 32px; font-size: 16px;">
+          🔍 Search Directory
+        </a>
+        <a href="register.html" class="btn btn-outline" style="padding: 14px 32px; font-size: 16px;">
+          💉 Register as Donor
+        </a>
+      </div>
 
-  // show loading placeholders
-  $('#cardsWrap').innerHTML = '<div class="no-results">Loading…</div>';
-  $('#tbodyData').innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
-  $('#noResults').style.display = 'none';
+      <!-- Live Stats (Compact) -->
+      <div class="stats-grid"
+        style="grid-template-columns: repeat(3, 1fr); max-width: 800px; margin: 0 auto; gap: 15px;">
+        <div class="stat-card" style="padding: 15px;">
+          <div class="stat-number" id="stat-online">--</div>
+          <div class="stat-label">🔴 Live Users Online</div>
+        </div>
+        <div class="stat-card" style="padding: 15px;">
+          <div class="stat-number" id="stat-institutes">--</div>
+          <div class="stat-label">Blood Banks</div>
+        </div>
+        <div class="stat-card" style="padding: 15px;">
+          <div class="stat-number" id="stat-users">--</div>
+          <div class="stat-label">Registered Donors</div>
+        </div>
+      </div>
 
-  try {
-    const res = await fetch(API_ENDPOINT + '?' + params.toString(), {cache:'no-store'});
-    const json = await res.json();
+    </div>
+  </header>
 
-    if(!json || !json.success){
-      console.error('API error:', json);
-      $('#cardsWrap').innerHTML = '<div class="no-results">Error loading data. See console.</div>';
-      $('#tbodyData').innerHTML = '<tr><td colspan="7">Error loading data. See console.</td></tr>';
-      $('#totalCount').textContent = '0';
-      renderPager(0,state.page,state.per_page,'#pagerTop');
-      renderPager(0,state.page,state.per_page,'#pagerBottom');
-      return;
-    }
+  <!-- Quick Info Section -->
+  <section class="container" style="margin-bottom: 60px;">
+    <div
+      style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-xl); padding: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+      <div>
+        <h2 style="font-size: 30px; margin-bottom: 16px; color: var(--text-main);">Why Use This Directory?</h2>
+        <p style="color: var(--text-muted); margin-bottom: 24px;">During emergencies, finding the nearest blood bank
+          with the right blood group availability is critical. Our platform aggregates data from government and private
+          sources to provide you with accurate, up-to-date information.</p>
+        <ul style="list-style: none; padding: 0; display: grid; gap: 12px; color: var(--text-main); font-weight: 500;">
+          <li style="display: flex; gap: 10px;">✅ Real-time Contact Details</li>
+          <li style="display: flex; gap: 10px;">✅ Location-based Search</li>
+          <li style="display: flex; gap: 10px;">✅ Verified Government & Private Banks</li>
+        </ul>
+      </div>
+      <div style="text-align: center;">
+        <div style="font-size: 100px; line-height: 1;">🏥</div>
+        <!-- Placeholder for an illustration -->
+      </div>
+    </div>
+  </section>
 
-    const rows = json.data || [];
-    $('#totalCount').textContent = String(json.total || 0);
-    const startIndex = (json.page - 1) * json.per_page;
+  <!-- Footer -->
+  <footer style="background: white; border-top: 1px solid var(--border-color); padding: 60px 0; margin-top: 60px;">
+    <div class="container" style="text-align: center;">
+      <div class="logo" style="justify-content: center; margin-bottom: 20px;">
+        <span>🩸</span> Bloodbank Directory
+      </div>
+      <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 30px;">
+        Connecting lives through information. A non-profit initiative to help citizens find blood banks easily.
+      </p>
+      <div style="display: flex; justify-content: center; gap: 24px; color: var(--text-muted); font-size: 14px;">
+        <a href="#" class="btn-link">Privacy Policy</a>
+        <a href="#" class="btn-link">Terms of Service</a>
+        <a href="#" class="btn-link">Contact Support</a>
+      </div>
+      <div style="margin-top: 40px; font-size: 13px; color: #9ca3af;">
+        &copy; 2026 Bloodbank Directory India. All rights reserved.
+      </div>
+    </div>
+  </footer>
 
-    if(state.view === 'cards'){
-      $('#tableWrap').style.display = 'none';
-      $('#cardsWrap').style.display = '';
-      renderCards(rows, startIndex);
-    } else {
-      $('#cardsWrap').style.display = 'none';
-      $('#tableWrap').style.display = '';
-      renderTable(rows, startIndex);
-    }
-
-    renderPager(json.total, json.page, json.per_page, '#pagerTop');
-    renderPager(json.total, json.page, json.per_page, '#pagerBottom');
-
-  } catch (err) {
-    console.error(err);
-    $('#cardsWrap').innerHTML = '<div class="no-results">Network error. See console.</div>';
-    $('#tbodyData').innerHTML = '<tr><td colspan="7">Network error. See console.</td></tr>';
-  }
-}
-
-/* --------- Events --------- */
-$('#applyBtn').addEventListener('click', () => {
-  state.page = 1;
-  state.per_page = parseInt($('#perPage').value, 10) || 50;
-  state.district = $('#district').value.trim();
-  state.type = $('#type').value;
-  state.contact = $('#contact').value;
-  fetchData();
-});
-
-$('#resetBtn').addEventListener('click', () => {
-  $('#district').value = ''; $('#type').value = 'all'; $('#contact').value = 'all'; $('#perPage').value = '50';
-  state = { page:1, per_page:50, district:'', type:'all', contact:'all', view: state.view };
-  fetchData();
-});
-
-/* toggle view: cards <-> table */
-$('#viewToggleBtn').addEventListener('click', () => {
-  if(state.view === 'cards'){
-    state.view = 'table';
-    $('#viewToggleBtn').textContent = 'Switch to Cards';
-  } else {
-    state.view = 'cards';
-    $('#viewToggleBtn').textContent = 'Switch to Table';
-  }
-  // keep the same page & filters; re-render using cached API fetch
-  fetchData();
-});
-
-/* initial page load */
-fetchData();
-</script>
+  <script src="js/chat.js"></script>
 </body>
+
 </html>
