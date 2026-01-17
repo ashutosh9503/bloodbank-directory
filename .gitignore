@@ -2,3 +2,5 @@
 .netlify
 .env
 config/supabase.php
+.env.*
+node_modules
