@@ -1,156 +1,199 @@
-Bloodbank Directory
+# 🩸 Bloodbank Directory India
 
-A modern, fast, and searchable Blood Bank Directory web application built to help users easily find blood banks across cities with real-time filtering and pagination.
-The project uses Netlify Functions as a backend and Supabase as a secure database layer.
+A modern, fast, and reliable web platform to discover blood banks across India.  
+Built with Supabase, Netlify Functions, and a clean medical-grade UI.
 
-Live Demo
+---
 
-Live Site:
-https://bloodbank-directory.netlify.app
+## 🌐 Live Demo
 
-Features
+https://bloodbank-directory.netlify.app/
 
-Search by City / Location
+(Replace with your real URL after deployment)
 
-Filter by Blood Bank Type
+---
 
-Contact Availability Filter
+## ✨ Features
 
-Pagination for Large Datasets
+- 🔍 Search blood banks by **city / district / pincode**
+- 🗂 Filter by organization type (Govt, Private, Charitable, etc.)
+- 🗺 Google Maps integration for locations
+- 📞 One-click calling support
+- 📰 Medical news section (Supabase powered)
+- 📊 Pagination for large datasets
+- ⚡ Serverless backend using Netlify Functions
+- 🔐 Secure environment variables (no secrets in frontend)
+- 📱 Fully responsive UI
+- ❤️ Medical themed professional design
 
-Serverless Backend (Netlify Functions)
+---
 
-Secure Database Access via Supabase
+## 🏗 Tech Stack
 
-Responsive UI (Mobile Friendly)
+**Frontend**
+- HTML5
+- CSS3 (Custom UI)
+- Vanilla JavaScript
 
-Direct Google Maps Integration
+**Backend**
+- Supabase (PostgreSQL)
+- Netlify Serverless Functions
 
-Scalable & Maintainable Architecture
+**Hosting**
+- Netlify
 
-Tech Stack
-Frontend
+---
 
-HTML5
+## 📁 Project Structure
 
-CSS3
 
-Vanilla JavaScript
 
-Backend
-
-Netlify Functions (Node.js)
-
-Supabase (PostgreSQL)
-
-DevOps / Hosting
-
-GitHub (Version Control)
-
-Netlify (Hosting + CI/CD)
-
-Project Structure
-bloodbank-directory/
-│
-├── public/
-│   ├── index.html          # Main UI
-│   ├── get_data.php        # Legacy/local testing
-│   └── get-blood.php
-│
+.
+├── index.html
+├── news.html
+├── assets/
+├── js/
+│ ├── app.js
+│ └── app_news.js
 ├── netlify/
-│   └── functions/
-│       ├── get_data.js     # Main API function
-│       ├── get_data_debug.js
-│       └── get_data_inspect.js
-│
-├── config/
-│   └── db.php              # Database config (local only)
-│
-├── models/
-│   └── Institute.php       # Data model
-│
-├── sql/
-│   └── schema.sql          # Database schema
-│
-├── netlify.toml            # Netlify configuration
-├── package.json
-├── README.md
-└── .gitignore
-
-Environment Variables (Required)
-
-These must be added in Netlify, not in the repository.
-
-Variable Name	Description
-SUPABASE_URL	Supabase project URL
-SUPABASE_SERVICE_KEY	Supabase service role key
-
-Netlify Path:
-Project → Project configuration → Environment variables
-
-.env file is intentionally not included for security reasons.
-
-Netlify Configuration
-
-Build Settings:
-
-Setting	Value
-Build Command	(leave empty)
-Publish Directory	public
-Functions Directory	netlify/functions
-API Endpoint
-Fetch Blood Bank Data
-GET /.netlify/functions/get_data
+│ └── functions/
+│ ├── get_data.js
+│ └── get_news.js
+├── .gitignore
+└── README.md
 
 
-Query Parameters (optional):
+---
 
-district → city/location search
+## 🚀 Getting Started (Local Setup)
 
-type → blood bank type
+### 1️⃣ Clone the repository
 
-contact → contact availability
+```bash
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
 
-page → page number
+2️⃣ Install Netlify CLI
+npm install -g netlify-cli
 
-per_page → results per page
+3️⃣ Create .env file (local only)
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_KEY=your_service_role_key
 
-Local Development (Optional)
-# Install dependencies
-npm install
 
-# Start Netlify local server
+⚠️ Never commit this file.
+
+4️⃣ Start development server
 netlify dev
 
 
-Security Notes
+App will run at:
 
-No secrets stored in GitHub
+http://localhost:8888
 
-Environment variables secured via Netlify
+🗄 Supabase Setup
+Required Tables
+institutes
 
-Supabase accessed only via serverless functions
+Stores blood bank data.
 
-No direct database exposure to frontend
+medical_news
 
-Future Enhancements
+Stores news articles.
 
-City auto-suggestions
+Example schema:
 
-UI animations & skeleton loaders
+create table medical_news (
+  id bigint generated always as identity primary key,
+  title text not null,
+  summary text,
+  category text,
+  source text,
+  url text,
+  created_at timestamptz default now()
+);
 
-Admin dashboard
+Enable Public Read Access
+alter table medical_news enable row level security;
 
-Blood group availability filters
+create policy "Public read"
+on medical_news
+for select
+using (true);
 
-SEO optimization
+🌍 Deployment (Netlify)
+1. Push code to GitHub
+git add .
+git commit -m "Deploy bloodbank directory"
+git push origin main
 
-Author
+2. Connect to Netlify
 
-Ashutosh Mishra
-GitHub: https://github.com/ashutosh9503
+Login to Netlify
 
-License
+Add new site → Import from GitHub
 
-This project is licensed under the MIT License.
-You are free to use, modify, and distribute with attribution.
+Select your repository
+
+Deploy
+
+3. Add environment variables in Netlify
+
+Netlify → Site Settings → Environment Variables:
+
+SUPABASE_URL
+SUPABASE_SERVICE_KEY
+
+
+Redeploy after saving.
+
+🔐 Security Notes
+
+.env file is ignored via .gitignore
+
+Supabase Service Role key used only in Netlify functions
+
+Frontend uses only public endpoints
+
+RLS enabled on tables
+
+🧪 API Endpoints
+Endpoint	Description
+/.netlify/functions/get_data	Fetch blood banks
+/.netlify/functions/get_news	Fetch medical news
+📌 Roadmap
+
+ Real-time online users counter
+
+ Admin dashboard
+
+ Auto medical news sync (API)
+
+ State-wise browsing
+
+ Advanced analytics
+
+ Offline PWA support
+
+🤝 Contributing
+
+Pull requests are welcome.
+For major changes, please open an issue first.
+
+📄 License
+
+MIT License
+
+❤️ Acknowledgements
+
+Supabase
+
+Netlify
+
+Indian Health Data Providers
+
+📞 Contact
+
+Created by [Your Name]
+
+If you found this project helpful, give it a ⭐ on GitHub!
